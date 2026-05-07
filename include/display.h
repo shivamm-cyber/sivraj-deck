@@ -88,6 +88,8 @@ public:
 
 private:
     bool _initialized = false;
+    uint16_t _spriteH = 0;
+    uint16_t _pushY = 0;
     uint16_t getBGColor();
     uint16_t rssiColor(int8_t rssi);
     void drawIcon8(uint16_t x, uint16_t y, const uint8_t* icon,

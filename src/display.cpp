@@ -11,20 +11,27 @@ bool DisplayManager::begin() {
     #if HAS_SCREEN
     tft.init();
     tft.setRotation(0);  // portrait vertical
-    tft.fillScreen(COL_BG);
+    tft.fillScreen(TFT_BLACK);
 
-    // 8-bit sprite = 76,800 bytes (fits in non-PSRAM ESP32)
-    spr.setColorDepth(8);
+    // 16-bit half-height sprite: 240 x 160 x 2 = 76,800 bytes
+    spr.setColorDepth(16);
     void* sprPtr = spr.createSprite(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT);
+    if (!sprPtr) {
+        // Try half height
+        Serial.println(F("[DISP] Full sprite failed, using half"));
+        sprPtr = spr.createSprite(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT / 2);
+    }
     if (!sprPtr) {
         Serial.println(F("[DISP] Sprite FAILED"));
         _initialized = false;
         return false;
     }
-    spr.fillSprite(COL_BG);
+    _spriteH = spr.height();
+    spr.fillSprite(TFT_BLACK);
 
     _initialized = true;
-    Serial.printf("[DISP] Init OK (8-bit sprite, heap=%lu)\n", ESP.getFreeHeap());
+    Serial.printf("[DISP] Init OK (16-bit %dx%d sprite, heap=%lu)\n",
+                  spr.width(), _spriteH, ESP.getFreeHeap());
     return true;
     #else
     return false;
@@ -33,12 +40,17 @@ bool DisplayManager::begin() {
 
 void DisplayManager::clear() {
     if (!_initialized) return;
-    spr.fillSprite(getBGColor());
+    spr.fillSprite(TFT_BLACK);
 }
 
 void DisplayManager::pushSprite() {
     if (!_initialized) return;
-    spr.pushSprite(0, 0);
+    if (_spriteH >= TFT_SCREEN_HEIGHT) {
+        spr.pushSprite(0, 0);
+    } else {
+        // Half-sprite: just push to current Y offset
+        spr.pushSprite(0, _pushY);
+    }
 }
 
 uint16_t DisplayManager::getBGColor() {
