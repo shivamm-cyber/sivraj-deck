@@ -1,0 +1,9 @@
+.pio/
+.vscode/
+*.o
+*.elf
+*.bin
+*.map
+__pycache__/
+.DS_Store
+Thumbs.db
