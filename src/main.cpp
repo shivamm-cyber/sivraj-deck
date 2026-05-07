@@ -26,7 +26,6 @@ static EvilPortal    evilPortal;
 static MenuFunctions menu;
 
 static uint32_t lastStatusPush = 0;
-static uint32_t watchdogTimer = 0;
 
 // ── Boot Splash ─────────────────────────────────────────────
 static void showSplash() {
@@ -107,33 +106,13 @@ void setup() {
     menu.begin(&display, &wifiEngine, &evilPortal, &mqttHandler,
                &sdCard, &battery, &settingsMgr);
 
-    watchdogTimer = millis();
-
     Serial.println(F("[DECK] All systems GO"));
     Serial.printf("[DECK] Free heap: %lu\n", ESP.getFreeHeap());
 }
 
 // ── Loop ────────────────────────────────────────────────────
 void loop() {
-    static uint32_t lastDisplayRefresh = 0;
     uint32_t now = millis();
-
-    // Display watchdog: force refresh every 1s to prevent white screen
-    if (now - lastDisplayRefresh > 1000) {
-        lastDisplayRefresh = now;
-        display.clear();
-        display.drawStatusBar(
-            wifiEngine.getChannel(),
-            wifiEngine.getAPCount(),
-            wifiEngine.getStationCount(),
-            wifiEngine.getPacketsPerSec(),
-            battery.getPercent(),
-            false,
-            sdCard.isReady(),
-            mqttHandler.isConnected()
-        );
-        display.pushSprite();
-    }
 
     // Core loop drivers
     wifiEngine.update();
