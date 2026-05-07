@@ -10,17 +10,25 @@ DisplayManager display;
 bool DisplayManager::begin() {
     #if HAS_SCREEN
     tft.init();
-    tft.setRotation(1);  // landscape 320x240
+    tft.setRotation(3);  // landscape — proven working
     tft.fillScreen(COL_BG);
-    tft.setTextColor(COL_TEXT, COL_BG);
 
-    // Create full-screen sprite for flicker-free rendering
+    // Create sprite — check if allocation succeeds
     spr.setColorDepth(16);
-    spr.createSprite(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT);
+    void* sprPtr = spr.createSprite(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT);
+    if (!sprPtr) {
+        Serial.println(F("[DISP] Full sprite FAILED, trying half"));
+        sprPtr = spr.createSprite(TFT_SCREEN_WIDTH, TFT_SCREEN_HEIGHT / 2);
+        if (!sprPtr) {
+            Serial.println(F("[DISP] Sprite alloc FAILED entirely"));
+            _initialized = false;
+            return false;
+        }
+    }
     spr.fillSprite(COL_BG);
 
     _initialized = true;
-    Serial.println(F("[DISP] Init OK (320x240 sprite)"));
+    Serial.printf("[DISP] Init OK (sprite, heap=%lu)\n", ESP.getFreeHeap());
     return true;
     #else
     return false;
@@ -68,40 +76,29 @@ void DisplayManager::drawStatusBar(uint8_t channel, uint16_t apCount,
     // Background
     spr.fillRect(0, 0, TFT_SCREEN_WIDTH, STATUS_BAR_H, COL_BG_NAVY);
 
-    // WiFi icon
-    drawIcon8(2, 4, icon_wifi, mqttOk ? COL_STATUS_OK : COL_TEXT_DIM);
-
-    // Channel / counts
-    char statusLine[64];
+    // Channel / counts — compact for 240px
+    char statusLine[40];
     snprintf(statusLine, sizeof(statusLine),
-             "CH:%d | AP:%d | ST:%d | %lu/s",
+             "CH%d AP%d ST%d %lu/s",
              channel, apCount, stCount, pps);
     spr.setTextFont(1);
-    spr.setTextColor(COL_TEXT, COL_BG_NAVY);
-    spr.drawString(statusLine, 14, 4);
+    spr.setTextColor(mqttOk ? COL_STATUS_OK : COL_TEXT, COL_BG_NAVY);
+    spr.drawString(statusLine, 2, 4);
 
-    // SD indicator
-    if (!sdOk) {
-        spr.setTextColor(COL_STATUS_WARN, COL_BG_NAVY);
-        spr.drawString("noSD", 230, 4);
-    }
-
-    // Battery
+    // Battery on right side
     uint16_t battCol = battPct > 20 ? COL_STATUS_OK :
                        (battPct > 10 ? COL_STATUS_WARN : COL_STATUS_ERR);
-    char battStr[12];
-    snprintf(battStr, sizeof(battStr), "%s%d%%",
-             charging ? "+" : "", battPct);
+    char battStr[8];
+    snprintf(battStr, sizeof(battStr), "%d%%", battPct);
 
-    // Battery bar (small 20x8 at right edge)
-    uint16_t bx = 282;
-    spr.drawRect(bx, 4, 20, 8, battCol);
-    spr.fillRect(bx + 20, 6, 2, 4, battCol); // terminal nub
-    uint8_t fillW = (uint8_t)((battPct / 100.0f) * 18);
+    // Battery bar (16x8 at right)
+    uint16_t bx = TFT_SCREEN_WIDTH - 38;
+    spr.drawRect(bx, 4, 16, 8, battCol);
+    spr.fillRect(bx + 16, 6, 2, 4, battCol);
+    uint8_t fillW = (uint8_t)((battPct / 100.0f) * 14);
     spr.fillRect(bx + 1, 5, fillW, 6, battCol);
-
     spr.setTextColor(battCol, COL_BG_NAVY);
-    spr.drawString(battStr, 305, 4);
+    spr.drawString(battStr, TFT_SCREEN_WIDTH - 20, 4);
 
     // Bottom separator
     spr.drawFastHLine(0, STATUS_BAR_H - 1, TFT_SCREEN_WIDTH, COL_SEPARATOR);
@@ -110,12 +107,12 @@ void DisplayManager::drawStatusBar(uint8_t channel, uint16_t apCount,
 /* ── Menu Header ───────────────────────────────────────── */
 void DisplayManager::drawMenuHeader(const char* title) {
     spr.fillRect(0, STATUS_BAR_H, TFT_SCREEN_WIDTH, HEADER_H, COL_HEADER_BG);
-    spr.setTextFont(4);
+    spr.setTextFont(2);  // smaller font for 240px
     spr.setTextColor(COL_TEXT, COL_HEADER_BG);
 
     uint16_t tw = spr.textWidth(title);
     uint16_t tx = (TFT_SCREEN_WIDTH - tw) / 2;
-    spr.drawString(title, tx, STATUS_BAR_H + 1);
+    spr.drawString(title, tx, STATUS_BAR_H + 4);
 
     spr.drawFastHLine(0, STATUS_BAR_H + HEADER_H - 1,
                       TFT_SCREEN_WIDTH, COL_SEPARATOR);
@@ -151,21 +148,21 @@ void DisplayManager::drawMenuItem(uint8_t row, const char* text,
     uint16_t y = MENU_Y_START + (row * MENU_ITEM_H);
 
     if (selected) {
-        spr.fillRect(0, y, TFT_SCREEN_WIDTH - 2, MENU_ITEM_H, COL_SELECTED_BG);
+        spr.fillRect(0, y, TFT_SCREEN_WIDTH, MENU_ITEM_H, COL_SELECTED_BG);
         spr.setTextColor(COL_HIGHLIGHT, COL_SELECTED_BG);
-        spr.setTextFont(2);
-        spr.drawString(">", 4, y + 7);
-        spr.drawString(text, 18, y + 7);
+        spr.setTextFont(1);
+        spr.drawString(">", 4, y + 8);
+        spr.drawString(text, 14, y + 8);
     } else {
-        spr.fillRect(0, y, TFT_SCREEN_WIDTH - 2, MENU_ITEM_H, getBGColor());
+        spr.fillRect(0, y, TFT_SCREEN_WIDTH, MENU_ITEM_H, getBGColor());
         spr.setTextColor(COL_TEXT_DIM, getBGColor());
-        spr.setTextFont(2);
-        spr.drawString(text, 18, y + 7);
+        spr.setTextFont(1);
+        spr.drawString(text, 14, y + 8);
     }
 
     // Subtle bottom border
-    spr.drawFastHLine(10, y + MENU_ITEM_H - 1,
-                      TFT_SCREEN_WIDTH - 20, COL_SEPARATOR);
+    spr.drawFastHLine(8, y + MENU_ITEM_H - 1,
+                      TFT_SCREEN_WIDTH - 16, COL_SEPARATOR);
 }
 
 /* ── Packet Monitor ────────────────────────────────────── */

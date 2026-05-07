@@ -15,10 +15,10 @@
 #define TFT_SCREEN_HEIGHT  240
 #define TOP_FIXED_AREA     16
 #define STATUS_BAR_H       16
-#define HEADER_H           26
+#define HEADER_H           22
 #define MENU_Y_START       (STATUS_BAR_H + HEADER_H)
-#define MENU_ITEM_H        28
-#define MENU_ITEMS_VISIBLE 7
+#define MENU_ITEM_H        24
+#define MENU_ITEMS_VISIBLE 8
 #define STATUS_BAR_COLOR   0x000A
 
 // ── Buttons ─────────────────────────────────────────────────
