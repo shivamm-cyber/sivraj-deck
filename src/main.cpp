@@ -30,29 +30,24 @@ static uint32_t lastStatusPush = 0;
 // ── Boot Splash ─────────────────────────────────────────────
 static void showSplash() {
     display.clear();
-    display.spr.setTextFont(4);
-    display.spr.setTextColor(TFT_CYAN, COL_BG);
+    uint16_t cx = TFT_SCREEN_WIDTH / 2;
     display.spr.setTextDatum(MC_DATUM);
-    display.spr.drawString("SIVRAJ DECK", 160, 60);
 
     display.spr.setTextFont(2);
-    display.spr.setTextColor(COL_TEXT_DIM, COL_BG);
-    display.spr.drawString("Cybersecurity Field Unit", 160, 100);
+    display.spr.setTextColor(TFT_CYAN, COL_BG);
+    display.spr.drawString("SIVRAJ DECK", cx, TFT_SCREEN_HEIGHT / 3);
 
     display.spr.setTextFont(1);
+    display.spr.setTextColor(COL_TEXT_DIM, COL_BG);
+    display.spr.drawString("Cybersec Field Unit", cx, TFT_SCREEN_HEIGHT / 2);
+
     char ver[32];
     snprintf(ver, 32, "v%s", FIRMWARE_VERSION);
-    display.spr.drawString(ver, 160, 130);
+    display.spr.drawString(ver, cx, TFT_SCREEN_HEIGHT / 2 + 20);
     display.spr.setTextDatum(TL_DATUM);
 
-    // Progress bar
-    for (int i = 0; i <= 280; i += 8) {
-        display.spr.fillRect(20, 160, 280, 6, COL_BAR_BG);
-        display.spr.fillRect(20, 160, i, 6, TFT_CYAN);
-        display.pushSprite();
-        delay(10);
-    }
-    delay(1000);
+    display.pushSprite();
+    delay(1500);
 }
 
 // ── Setup ───────────────────────────────────────────────────
@@ -87,9 +82,9 @@ void setup() {
 
     // Connect WiFi for MQTT
     display.clear();
-    display.spr.setTextFont(2);
+    display.spr.setTextFont(1);
     display.spr.setTextColor(COL_TEXT, COL_BG);
-    display.spr.drawString("Connecting WiFi...", 10, 40);
+    display.spr.drawString("Connecting WiFi...", 10, 20);
     display.pushSprite();
 
     WiFi.mode(WIFI_STA);

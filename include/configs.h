@@ -9,16 +9,16 @@
 #define FIRMWARE_NAME    "SIVRAJ-DECK"
 
 // ── Display ─────────────────────────────────────────────────
-#define SCREEN_WIDTH       320
-#define SCREEN_HEIGHT      240
-#define TFT_SCREEN_WIDTH   320
-#define TFT_SCREEN_HEIGHT  240
+#define SCREEN_WIDTH       240
+#define SCREEN_HEIGHT      320
+#define TFT_SCREEN_WIDTH   240
+#define TFT_SCREEN_HEIGHT  320
 #define TOP_FIXED_AREA     16
 #define STATUS_BAR_H       16
-#define HEADER_H           22
+#define HEADER_H           20
 #define MENU_Y_START       (STATUS_BAR_H + HEADER_H)
-#define MENU_ITEM_H        24
-#define MENU_ITEMS_VISIBLE 8
+#define MENU_ITEM_H        22
+#define MENU_ITEMS_VISIBLE 12
 #define STATUS_BAR_COLOR   0x000A
 
 // ── Buttons ─────────────────────────────────────────────────

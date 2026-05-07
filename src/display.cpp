@@ -10,7 +10,7 @@ DisplayManager display;
 bool DisplayManager::begin() {
     #if HAS_SCREEN
     tft.init();
-    tft.setRotation(3);  // landscape — proven working
+    tft.setRotation(0);  // portrait vertical
     tft.fillScreen(COL_BG);
 
     // 8-bit sprite = 76,800 bytes (fits in non-PSRAM ESP32)
